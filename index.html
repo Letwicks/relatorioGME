@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gerador de Relatório de Atividades</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Define a fonte Inter para todo o corpo, com fallback */
+        body {
+            font-family: "Inter", sans-serif;
+            background-color: #f3f4f6; /* Cor de fundo suave */
+        }
+        /* Estilo para o placeholder do textarea */
+        textarea::placeholder {
+            color: #9ca3af; /* Cor cinza para o placeholder */
+        }
+        /* Estilo para focar nos inputs e textareas */
+        input:focus, textarea:focus {
+            outline: none;
+            border-color: #6366f1; /* Cor roxa ao focar */
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2); /* Sombra suave ao focar */
+        }
+        /* Estilo para a mensagem de erro/sucesso */
+        .message-box {
+            padding: 0.75rem 1rem;
+            border-radius: 0.375rem; /* rounded-md */
+            font-size: 0.875rem; /* text-sm */
+            font-weight: 500; /* font-medium */
+            text-align: center;
+            margin-top: 1rem;
+            transition: opacity 0.3s ease-in-out;
+        }
+        .message-box.success {
+            background-color: #d1fae5; /* bg-green-100 */
+            color: #065f46; /* text-green-800 */
+        }
+        .message-box.error {
+            background-color: #fee2e2; /* bg-red-100 */
+            color: #991b1b; /* text-red-800 */
+        }
+        .message-box.hidden {
+            opacity: 0;
+            height: 0;
+            padding: 0;
+            overflow: hidden;
+        }
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen p-4">
+    <div class="bg-white p-8 rounded-xl shadow-lg w-full max-w-2xl border border-gray-200">
+        <h1 class="text-3xl font-bold text-center text-gray-800 mb-6">📝 Relatório de Atividades</h1>
+
+        <form id="reportForm" class="space-y-5">
+            <!-- Data e Nome -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label for="reportDate" class="block text-sm font-medium text-gray-700 mb-1">Data:</label>
+                    <input type="date" id="reportDate" class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" required>
+                </div>
+                <div>
+                    <label for="userName" class="block text-sm font-medium text-gray-700 mb-1">Nome do Colaborador:</label>
+                    <input type="text" id="userName" placeholder="Seu Nome Completo" class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" required>
+                </div>
+            </div>
+
+            <!-- Turno e Área Trabalhada -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label for="userShift" class="block text-sm font-medium text-gray-700 mb-1">Turno:</label>
+                    <select id="userShift" class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" required>
+                        <option value="">Selecione o Turno</option>
+                        <option value="Manhã">Manhã</option>
+                        <option value="Tarde">Tarde</option>
+                        <option value="Noite">Noite</option>
+                        <option value="Integral">Integral</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="workedArea" class="block text-sm font-medium text-gray-700 mb-1">Área Trabalhada:</label>
+                    <select id="workedArea" class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" required>
+                        <option value="">Selecione a Área</option>
+                        <option value="F1H PLZ">F1H PLZ</option>
+                        <option value="F1H PPZ">F1H PPZ</option>
+                        <option value="F1H COF">F1H COF</option>
+                        <option value="F1H PPP">F1H PPP</option>
+                        <option value="F2U PLZ">F2U PLZ</option>
+                        <option value="F2U PPZ">F2U PPZ</option>
+                        <option value="F2U COF">F2U COF</option>
+                        <option value="F2U PPP">F2U PPP</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Atividades Realizadas -->
+            <div>
+                <label for="activitiesDone" class="block text-sm font-medium text-gray-700 mb-1">✅ Atividades Realizadas:</label>
+                <textarea id="activitiesDone" rows="5" placeholder="Liste as atividades concluídas no seu período." class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm resize-y" required></textarea>
+            </div>
+
+            <!-- Pendências -->
+            <div>
+                <label for="pendingItems" class="block text-sm font-medium text-gray-700 mb-1">⚠️ Pendências para o Próximo Turno/Dia:</label>
+                <textarea id="pendingItems" rows="4" placeholder="Liste tudo o que ficou incompleto ou precisa de continuidade. Se não houver, escreva 'Nenhuma pendência'." class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm resize-y"></textarea>
+            </div>
+
+
+
+            <!-- Botão de Gerar e Copiar -->
+            <button type="button" onclick="generateAndCopyReport()" class="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-lg font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition duration-150 ease-in-out transform hover:scale-105">
+                Gerar e Copiar Relatório para WhatsApp
+            </button>
+
+            <!-- Mensagem de Confirmação/Erro -->
+            <div id="messageBox" class="message-box hidden" role="alert"></div>
+        </form>
+    </div>
+
+    <script>
+        // Função para exibir mensagens na tela
+        function showMessage(message, type = 'success') {
+            const messageBox = document.getElementById('messageBox');
+            messageBox.textContent = message;
+            messageBox.className = 'message-box'; // Reset classes
+            messageBox.classList.add(type);
+            messageBox.classList.remove('hidden');
+
+            setTimeout(() => {
+                messageBox.classList.add('hidden');
+            }, 3000); // Esconde a mensagem após 3 segundos
+        }
+
+        // Define a data atual e restaura o nome do colaborador salvos
+        document.addEventListener('DOMContentLoaded', (event) => {
+            const today = new Date();
+            const year = today.getFullYear();
+            const month = String(today.getMonth() + 1).padStart(2, '0');
+            const day = String(today.getDate()).padStart(2, '0');
+            document.getElementById('reportDate').value = `${year}-${month}-${day}`;
+
+            const savedName = localStorage.getItem('userName');
+            if (savedName) {
+                document.getElementById('userName').value = savedName;
+            }
+        });
+
+        async function generateAndCopyReport() {
+            // Coleta os valores dos campos do formulário
+            const reportDate = document.getElementById('reportDate').value;
+            const userName = document.getElementById('userName').value;
+            const userShift = document.getElementById('userShift').value;
+            const workedArea = document.getElementById('workedArea').value.trim();
+            const activitiesDone = document.getElementById('activitiesDone').value.trim();
+            let pendingItems = document.getElementById('pendingItems').value.trim();
+
+            // Validação básica dos campos obrigatórios
+            if (!reportDate || !userName || !userShift || !workedArea || !activitiesDone) {
+                showMessage("Por favor, preencha todos os campos obrigatórios (Data, Nome, Turno, Área Trabalhada, Atividades Realizadas, Planos de Ação).", 'error');
+                return;
+            }
+
+            // Formata a data para DD/MM/AAAA
+            const [year, month, day] = reportDate.split('-');
+            const formattedDate = `${day}/${month}/${year}`;
+
+            // Se não houver pendências, define a mensagem padrão
+            if (pendingItems === "") {
+                pendingItems = "Nenhuma pendência.";
+            }
+
+            // Constrói o texto do relatório no formato desejado
+            const reportText = `
+📝 *RELATÓRIO DE ATIVIDADES*
+*Data:* ${formattedDate}
+*Nome do Colaborador:* ${userName}
+*Turno:* ${userShift}
+*Área Trabalhada:* ${workedArea}
+
+✅ *1. Atividades Realizadas:*
+${activitiesDone.split('\n').map(line => `* ${line.trim()}`).join('\n')}
+
+⚠️ *2. Pendências para o Próximo Turno/Dia:*
+${pendingItems.split('\n').map(line => `* ${line.trim()}`).join('\n')}
+            `.trim(); // Remove espaços em branco extras no início/fim
+
+            // Salva o nome do colaborador no localStorage
+            localStorage.setItem('userName', userName);
+
+            // Copia o texto para a área de transferência usando a API moderna
+            try {
+                await navigator.clipboard.writeText(reportText);
+                showMessage("Relatório copiado para a área de transferência!", 'success');
+            } catch (err) {
+                console.error('Erro ao copiar', err);
+                showMessage("Erro ao copiar. Por favor, copie o texto abaixo manualmente.", 'error');
+            }
+        }
+    </script>
+</body>
+</html>
